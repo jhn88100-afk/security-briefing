@@ -1,6 +1,6 @@
 window.BRIEFING_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-19 01:17 KST",
+  "updatedAt": "2026-11-19 01:28 KST",
   "reviewWindow": "2026-10-21 ~ 2026-11-19 · 연결 게시판 첫 페이지, 기존 자료 보존",
   "sync": {
     "status": "연결 대기",
@@ -685,7 +685,7 @@ window.BRIEFING_DATA = {
     "sections": 5
   },
   "collection": {
-    "lastRunAt": "2026-11-19T01:17:53.703243+09:00",
+    "lastRunAt": "2026-11-19T01:28:08.161421+09:00",
     "added": 0,
     "sources": [
       {
