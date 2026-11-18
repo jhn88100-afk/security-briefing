@@ -17,3 +17,12 @@ body{font-size:14px;line-height:1.6}.shell{max-width:none;grid-template-columns:
 @media(max-width:700px){.shell{display:block}aside{padding:14px;overflow:visible}nav button{flex-shrink:0}main{padding:18px 14px}h1{font-size:22px}.sync-controls{min-width:0}.filters label,.filters label:first-child{flex:1 1 42%;min-width:0}.metrics div{padding:10px}.metrics strong{font-size:23px}.issue-table-wrap{max-height:65vh}.heading{flex-direction:row}}
 
 .status-chip[data-state="검토 대기"]{background:#edf0f3;color:#52606d}.status-chip[data-state="검토 중"]{background:#e4edfb;color:#265993}.status-chip[data-state="검토 완료"]{background:#e1f1e6;color:#24633d}
+
+/* Keep each mobile filter in its own full-width row. */
+@media(max-width:700px){
+ .filters{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:12px}
+ .filters label,.filters label:first-child,.filters label:nth-child(2){width:100%;min-width:0;max-width:100%;white-space:normal;word-break:keep-all}
+ .filters select{width:100%;min-width:0;max-width:100%;font-size:16px;min-height:44px}
+ .filters #reset{justify-self:start}
+ .issue-table td small.muted{display:block;min-width:160px}
+}
