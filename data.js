@@ -1,6 +1,6 @@
 window.BRIEFING_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18 20:42 KST",
+  "updatedAt": "2026-11-18 20:47 KST",
   "reviewWindow": "2026-10-20 ~ 2026-11-18 · 연결 게시판 첫 페이지, 기존 자료 보존",
   "sync": {
     "status": "연결 대기",
@@ -81,7 +81,7 @@ window.BRIEFING_DATA = {
       "category": "vulnerability",
       "status": "일부 확인",
       "checkedAt": "2026-11-18",
-      "note": "보호나라 제품 보안공지 별도 분류. CVE·CVSS 및 영향 버전은 원문 확인 필요."
+      "note": "KISA 보호나라 보안공지: 게시판 첫 페이지 수집; 전체 기간 망라 아님"
     },
     {
       "category": "spam",
@@ -663,8 +663,8 @@ window.BRIEFING_DATA = {
     "sections": 5
   },
   "collection": {
-    "lastRunAt": "2026-11-18T20:42:17.014408+09:00",
-    "added": 20,
+    "lastRunAt": "2026-11-18T20:47:54.952194+09:00",
+    "added": 0,
     "sources": [
       {
         "name": "개인정보위 보도자료",
