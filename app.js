@@ -58,23 +58,46 @@ function refreshSourceFilters(){
  $("board-filter").value=boards.includes(selected)?selected:"";
 }
 
+
+function materialState(i){
+ const known={
+  "입법예고":"개정 예고","규정변경예고":"개정 예고",
+  "공포·시행 예정":"공포·시행 예정","시행":"시행 중",
+  "가이드·권고":"안내·권고","점검·제재 사례":"발표 완료",
+  "정책 논의":"정책 논의"
+ };
+ return known[i.stage]||"확인 필요";
+}
+function materialReason(i){
+ if(i.verification==="metadata-only"||i.stage==="원문 검토 대기")
+  return "제목·게시일만 수집 — 본문·첨부 및 적용 여부 확인 필요";
+ const s=materialState(i);
+ if(s==="확인 필요")return "자료 유형·공포 여부·시행일 확인 필요";
+ if(s==="개정 예고")return "개정안 단계 — 확정·시행 여부 후속 확인";
+ if(s==="공포·시행 예정")return i.effectiveAt?"시행 예정일: "+i.effectiveAt:"공포 후 시행일 확인 필요";
+ if(s==="시행 중")return "시행 중인 기준 — 우리 업무 적용 여부 검토";
+ if(s==="정책 논의")return "정책 논의 단계 — 확정된 의무 아님";
+ if(i.category==="vulnerability")return "권고 발표 완료 — 사용 제품·영향 버전·조치 필요 여부 검토";
+ return "발표된 자료 — 우리 업무 적용 여부 검토";
+}
+
 function render(){
  refreshSourceFilters();
  $("vulnerability-sources").hidden=category!=="vulnerability";
  $("vulnerability-sources").innerHTML=vulnerabilitySources.map(s=>'<div><strong>'+esc(s.agency)+' · '+esc(s.board)+'</strong><p>'+esc(s.note)+'</p>'+link(s.url,"공식 사이트 열기")+'</div>').join("");
  const stage=$("stage").value;
- const list=D.items.filter(i=>(!category||i.category===category)&&(!stage||i.stage===stage)&&(!$("agency-filter").value||sourceInfo(i).agency===$("agency-filter").value)&&(!$("board-filter").value||sourceInfo(i).board===$("board-filter").value)&&(!$("status-filter").value||state(i)===$("status-filter").value));
+ const list=D.items.filter(i=>(!category||i.category===category)&&(!stage||materialState(i)===stage)&&(!$("agency-filter").value||sourceInfo(i).agency===$("agency-filter").value)&&(!$("board-filter").value||sourceInfo(i).board===$("board-filter").value)&&(!$("status-filter").value||state(i)===$("status-filter").value));
  list.sort((a,b)=>$("sort").value==="deadline"?(a.deadline||"9999").localeCompare(b.deadline||"9999"):$("sort").value==="oldest"?(a.publishedAt||"").localeCompare(b.publishedAt||""):(b.publishedAt||"").localeCompare(a.publishedAt||""));
  $("count").textContent=list.length+" / 전체 "+D.items.length+"건";
  $("feed-title").textContent=category?(D.categories.find(c=>c.id===category)?.name||"티켓 처리 현황"):"전체 티켓";
- $("feed").innerHTML='<div class="issue-table-wrap"><table class="issue-table"><caption class="sr-only">분야별 규제 대응 티켓 목록</caption><thead><tr><th scope="col">티켓</th><th scope="col">제목</th><th scope="col">분야</th><th scope="col">처리 상태</th><th scope="col">입법·검토 단계</th><th scope="col">발표일</th><th scope="col">의견제출 기한</th></tr></thead><tbody>'+list.map(i=>'<tr data-id="'+esc(i.id)+'"><td class="issue-key">'+esc(i.id.toUpperCase())+'</td><td class="issue-title"><button data-id="'+esc(i.id)+'">'+esc(i.title)+'</button><small>'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</small></td><td>'+esc(D.categories.find(c=>c.id===i.category)?.name||i.category)+'</td><td><span class="status-chip" data-state="'+esc(state(i))+'">'+esc(state(i))+'</span></td><td><span class="badge">'+esc(i.stage)+'</span></td><td class="issue-date">'+esc(i.publishedAt)+'</td><td class="issue-date">'+esc(i.deadline||"—")+'</td></tr>').join("")+(!list.length?'<tr><td colspan="7" class="issue-empty">조건에 맞는 등록 자료가 없습니다. 0건은 해당 기관에 발표가 없다는 뜻이 아닙니다.</td></tr>':"")+'</tbody></table></div>';
+ $("feed").innerHTML='<div class="issue-table-wrap"><table class="issue-table"><caption class="sr-only">분야별 규제 대응 티켓 목록</caption><thead><tr><th scope="col">티켓</th><th scope="col">제목</th><th scope="col">분야</th><th scope="col">검토 상태</th><th scope="col">자료 상태</th><th scope="col">발표일</th><th scope="col">의견제출 기한</th></tr></thead><tbody>'+list.map(i=>'<tr data-id="'+esc(i.id)+'"><td class="issue-key">'+esc(i.id.toUpperCase())+'</td><td class="issue-title"><button data-id="'+esc(i.id)+'">'+esc(i.title)+'</button><small>'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</small></td><td>'+esc(D.categories.find(c=>c.id===i.category)?.name||i.category)+'</td><td><span class="status-chip" data-state="'+esc(state(i))+'">'+esc(state(i))+'</span></td><td><span class="badge">'+esc(materialState(i))+'</span><small class="muted">'+esc(materialReason(i))+'</small></td><td class="issue-date">'+esc(i.publishedAt)+'</td><td class="issue-date">'+esc(i.deadline||"—")+'</td></tr>').join("")+(!list.length?'<tr><td colspan="7" class="issue-empty">조건에 맞는 등록 자료가 없습니다. 0건은 해당 기관에 발표가 없다는 뜻이 아닙니다.</td></tr>':"")+'</tbody></table></div>';
 
  document.querySelectorAll("[data-category]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.category===category)));
 }
 function show(id){
  const i=D.items.find(x=>x.id===id);if(!i)return;activeId=id;
- $("detail-content").innerHTML='<p class="eyebrow">'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</p><h2 id="detail-title">'+esc(i.title)+'</h2><span class="badge">'+esc(i.stage)+'</span><dl><dt>발표일</dt><dd>'+esc(i.publishedAt)+'</dd><dt>공포일</dt><dd>'+esc(i.promulgatedAt||"미공포 / 해당 없음")+'</dd><dt>시행일</dt><dd>'+esc(i.effectiveAt||i.effectiveNote)+'</dd><dt>의견제출</dt><dd>'+esc(i.deadline||"해당 없음")+'</dd><dt>적용 대상</dt><dd>'+esc(i.applicability)+'</dd><dt>확인일</dt><dd>'+esc(i.checkedAt)+'</dd></dl>'+[["① 점검 개요",i.overview],[i.verification==="metadata-only"?"② 원문 검토 대기 · 제목·게시일만 수집":"② 발표 요약",i.summary],["③ 우리 업무 영향 · 실무 해석",i.impact],["④ 대응 방안·정책 변경 검토",i.response],["⑤ 실행 계획",i.plan]].map(([t,v])=>'<h3>'+t+'</h3><p>'+esc(v)+'</p>').join("")+'<p>'+link(i.sourceUrl,i.sourceLabel)+(i.relatedUrl?' · '+link(i.relatedUrl,"관련 보도자료"):"")+'</p>';
- $("detail-content").insertAdjacentHTML("beforeend",'<section class="panel"><h3>티켓 처리</h3><label>처리 상태<select id="ticket-status">'+steps.map(s=>'<option'+(state(i)===s?' selected':'')+'>'+esc(s)+'</option>').join("")+'</select></label><label>검토 메모 (선택)<textarea id="ticket-note" rows="3">'+esc(saved[id]?.note||"")+'</textarea></label><button id="save-ticket">변경 저장</button><p id="save-feedback" role="status"></p><p class="muted">이 브라우저에만 저장됩니다. Jira·GitHub·다른 기기와 동기화되지 않습니다. 개인정보·내부 증적을 입력하지 마세요.</p></section>');
+ $("detail-content").innerHTML='<p class="eyebrow">'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</p><h2 id="detail-title">'+esc(i.title)+'</h2><span class="badge">'+esc(materialState(i))+'</span><p class="muted">'+esc(materialReason(i))+'</p><dl><dt>원문 분류</dt><dd>'+esc(i.stage)+'</dd><dt>발표일</dt><dd>'+esc(i.publishedAt)+'</dd><dt>공포일</dt><dd>'+esc(i.promulgatedAt||"미공포 / 해당 없음")+'</dd><dt>시행일</dt><dd>'+esc(i.effectiveAt||i.effectiveNote)+'</dd><dt>의견제출</dt><dd>'+esc(i.deadline||"해당 없음")+'</dd><dt>적용 대상</dt><dd>'+esc(i.applicability)+'</dd><dt>확인일</dt><dd>'+esc(i.checkedAt)+'</dd></dl>'+[["① 점검 개요",i.overview],[i.verification==="metadata-only"?"② 원문 검토 대기 · 제목·게시일만 수집":"② 발표 요약",i.summary],["③ 우리 업무 영향 · 실무 해석",i.impact],["④ 대응 방안·정책 변경 검토",i.response],["⑤ 실행 계획",i.plan]].map(([t,v])=>'<h3>'+t+'</h3><p>'+esc(v)+'</p>').join("")+'<p>'+link(i.sourceUrl,i.sourceLabel)+(i.relatedUrl?' · '+link(i.relatedUrl,"관련 보도자료"):"")+'</p>';
+ $("detail-content").insertAdjacentHTML("beforeend",'<section class="panel"><h3>티켓 처리</h3><label>검토 상태<select id="ticket-status">'+steps.map(s=>'<option'+(state(i)===s?' selected':'')+'>'+esc(s)+'</option>').join("")+'</select></label><label>검토 메모 (선택)<textarea id="ticket-note" rows="3">'+esc(saved[id]?.note||"")+'</textarea></label><button id="save-ticket">변경 저장</button><p id="save-feedback" role="status"></p><p class="muted">이 브라우저에만 저장됩니다. Jira·GitHub·다른 기기와 동기화되지 않습니다. 개인정보·내부 증적을 입력하지 마세요.</p></section>');
  $("save-ticket").addEventListener("click",()=>{
  const status=$("ticket-status").value,note=$("ticket-note").value.trim();
  
