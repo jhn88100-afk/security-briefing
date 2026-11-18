@@ -7,17 +7,53 @@ let saved={};try{const v=JSON.parse(localStorage.getItem("regulatory-ticket-stat
 const state=i=>steps.includes(saved[i.id]?.status)?saved[i.id].status:"신규 접수";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const link=(url,label)=>{try{const u=new URL(url);return u.protocol==="https:"?'<a href="'+esc(u.href)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+' ↗</a>':esc(label)}catch{return esc(label)}};
+
+const sourceCatalog=[
+ {agency:"개인정보보호위원회",boards:["보도자료","안내서","기타 게시판"]},
+ {agency:"KISA",boards:["보안공지","보고서·가이드","공지사항","불법스팸 자료실","기타 게시판"]},
+ {agency:"금융위원회",boards:["보도자료","입법예고·규정변경예고","고시·공고·훈령","기타 게시판"]},
+ {agency:"금융감독원",boards:["기타 게시판"]},
+ {agency:"금융보안원",boards:["가이드","보도자료","레그테크","기타 게시판"]},
+ {agency:"방송미디어통신위원회",boards:["보도자료","기타 게시판"]}
+];
+function sourceInfo(i){
+ const u=i.sourceUrl||"";
+ if(/(?:^https:\/\/)(?:www\.)?pipc\.go\.kr\//.test(u))return {agency:"개인정보보호위원회",board:/bbsId=BS074(?:&|$)/.test(u)?"보도자료":/bbsId=BS217(?:&|$)/.test(u)?"안내서":"기타 게시판"};
+ if(/^https:\/\/(?:www\.)?boho\.or\.kr\//.test(u))return {agency:"KISA",board:/bbsId=B0000133(?:&|$)/.test(u)?"보안공지":/bbsId=B0000132(?:&|$)/.test(u)?"보고서·가이드":"기타 게시판"};
+ if(/^https:\/\/spam\.kisa\.or\.kr\//.test(u))return {agency:"KISA",board:"불법스팸 자료실"};
+ if(/^https:\/\/(?:www\.)?kisa\.or\.kr\//.test(u))return {agency:"KISA",board:/\/401(?:\/|$|\?)/.test(u)?"공지사항":"기타 게시판"};
+ if(/^https:\/\/(?:www\.)?fsc\.go\.kr\//.test(u))return {agency:"금융위원회",board:/\/no010101(?:\/|$|\?)/.test(u)?"보도자료":/\/po040301(?:\/|$|\?)/.test(u)?"입법예고·규정변경예고":/\/po040200(?:\/|$|\?)/.test(u)?"고시·공고·훈령":"기타 게시판"};
+ if(/^https:\/\/(?:www\.)?fss\.or\.kr\//.test(u))return {agency:"금융감독원",board:"기타 게시판"};
+ if(/^https:\/\/(?:www\.|regtech\.)?fsec\.or\.kr\//.test(u))return {agency:"금융보안원",board:u.includes("regtech.")?"레그테크":/\/bbs\/222(?:\/|$|\?)/.test(u)?"가이드":/\/bbs\/69(?:\/|$|\?)/.test(u)?"보도자료":"기타 게시판"};
+ if(/^https:\/\/(?:www\.)?kmcc\.go\.kr\//.test(u))return {agency:"방송미디어통신위원회",board:/page=A05030000(?:&|$)|boardId=1113(?:&|$)/.test(u)?"보도자료":"기타 게시판"};
+ return {agency:i.agency||"기관 미확인",board:"게시판 확인 필요"};
+}
+function refreshSourceFilters(){
+ const scoped=D.items.filter(i=>!category||i.category===category);
+ const agencies=[...new Set(scoped.map(i=>sourceInfo(i).agency))];
+ const current=$("agency-filter").value;
+ $("agency-filter").innerHTML='<option value="">전체 기관</option>'+agencies.map(a=>'<option value="'+esc(a)+'">'+esc(a)+' ('+scoped.filter(i=>sourceInfo(i).agency===a).length+')</option>').join("");
+ $("agency-filter").value=agencies.includes(current)?current:"";
+ const agency=$("agency-filter").value;
+ const subset=scoped.filter(i=>!agency||sourceInfo(i).agency===agency);
+ const boards=[...new Set([...subset.map(i=>sourceInfo(i).board),...(agency?(sourceCatalog.find(s=>s.agency===agency)?.boards||[]):[])])];
+ const selected=$("board-filter").value;
+ $("board-filter").innerHTML='<option value="">전체 게시판</option>'+boards.map(b=>'<option value="'+esc(b)+'">'+esc(b)+' ('+subset.filter(i=>sourceInfo(i).board===b).length+')</option>').join("");
+ $("board-filter").value=boards.includes(selected)?selected:"";
+}
+
 function render(){
+ refreshSourceFilters();
  const term=$("search").value.trim().toLowerCase(),stage=$("stage").value;
- const list=D.items.filter(i=>(!category||i.category===category)&&(!stage||i.stage===stage)&&(!term||JSON.stringify(i).toLowerCase().includes(term)));
+ const list=D.items.filter(i=>(!category||i.category===category)&&(!stage||i.stage===stage)&&(!$("agency-filter").value||sourceInfo(i).agency===$("agency-filter").value)&&(!$("board-filter").value||sourceInfo(i).board===$("board-filter").value)&&(!term||JSON.stringify(i).toLowerCase().includes(term)));
  $("count").textContent=list.length+"건";
- $("feed").innerHTML='<div class="issue-table-wrap"><table class="issue-table"><caption class="sr-only">분야별 규제 대응 티켓 목록</caption><thead><tr><th scope="col">티켓</th><th scope="col">제목</th><th scope="col">분야</th><th scope="col">처리 상태</th><th scope="col">입법 단계</th><th scope="col">발표일</th><th scope="col">의견제출 기한</th></tr></thead><tbody>'+list.map(i=>'<tr data-id="'+esc(i.id)+'"><td class="issue-key">'+esc(i.id.toUpperCase())+'</td><td class="issue-title"><button data-id="'+esc(i.id)+'">'+esc(i.title)+'</button><small>'+esc(i.agency)+'</small></td><td>'+esc(D.categories.find(c=>c.id===i.category)?.name||i.category)+'</td><td><span class="status-chip">'+esc(state(i))+'</span></td><td><span class="badge">'+esc(i.stage)+'</span></td><td class="issue-date">'+esc(i.publishedAt)+'</td><td class="issue-date">'+esc(i.deadline||"—")+'</td></tr>').join("")+(!list.length?'<tr><td colspan="7" class="issue-empty">조건에 맞는 티켓이 없습니다.</td></tr>':"")+'</tbody></table></div>';
+ $("feed").innerHTML='<div class="issue-table-wrap"><table class="issue-table"><caption class="sr-only">분야별 규제 대응 티켓 목록</caption><thead><tr><th scope="col">티켓</th><th scope="col">제목</th><th scope="col">분야</th><th scope="col">처리 상태</th><th scope="col">입법 단계</th><th scope="col">발표일</th><th scope="col">의견제출 기한</th></tr></thead><tbody>'+list.map(i=>'<tr data-id="'+esc(i.id)+'"><td class="issue-key">'+esc(i.id.toUpperCase())+'</td><td class="issue-title"><button data-id="'+esc(i.id)+'">'+esc(i.title)+'</button><small>'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</small></td><td>'+esc(D.categories.find(c=>c.id===i.category)?.name||i.category)+'</td><td><span class="status-chip">'+esc(state(i))+'</span></td><td><span class="badge">'+esc(i.stage)+'</span></td><td class="issue-date">'+esc(i.publishedAt)+'</td><td class="issue-date">'+esc(i.deadline||"—")+'</td></tr>').join("")+(!list.length?'<tr><td colspan="7" class="issue-empty">조건에 맞는 등록 자료가 없습니다. 0건은 해당 기관에 발표가 없다는 뜻이 아닙니다.</td></tr>':"")+'</tbody></table></div>';
 
  document.querySelectorAll("[data-category]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.category===category)));
 }
 function show(id){
  const i=D.items.find(x=>x.id===id);if(!i)return;activeId=id;
- $("detail-content").innerHTML='<p class="eyebrow">'+esc(i.agency)+'</p><h2 id="detail-title">'+esc(i.title)+'</h2><span class="badge">'+esc(i.stage)+'</span><dl><dt>발표일</dt><dd>'+esc(i.publishedAt)+'</dd><dt>공포일</dt><dd>'+esc(i.promulgatedAt||"미공포 / 해당 없음")+'</dd><dt>시행일</dt><dd>'+esc(i.effectiveAt||i.effectiveNote)+'</dd><dt>의견제출</dt><dd>'+esc(i.deadline||"해당 없음")+'</dd><dt>적용 대상</dt><dd>'+esc(i.applicability)+'</dd><dt>확인일</dt><dd>'+esc(i.checkedAt)+'</dd></dl>'+[["① 점검 개요",i.overview],["② 법령·가이드 변경 요약 · 확인된 사실",i.summary],["③ 우리 업무 영향 · 실무 해석",i.impact],["④ 대응 방안·정책 변경 검토",i.response],["⑤ 실행 계획",i.plan]].map(([t,v])=>'<h3>'+t+'</h3><p>'+esc(v)+'</p>').join("")+'<p>'+link(i.sourceUrl,i.sourceLabel)+(i.relatedUrl?' · '+link(i.relatedUrl,"관련 보도자료"):"")+'</p>';
+ $("detail-content").innerHTML='<p class="eyebrow">'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</p><h2 id="detail-title">'+esc(i.title)+'</h2><span class="badge">'+esc(i.stage)+'</span><dl><dt>발표일</dt><dd>'+esc(i.publishedAt)+'</dd><dt>공포일</dt><dd>'+esc(i.promulgatedAt||"미공포 / 해당 없음")+'</dd><dt>시행일</dt><dd>'+esc(i.effectiveAt||i.effectiveNote)+'</dd><dt>의견제출</dt><dd>'+esc(i.deadline||"해당 없음")+'</dd><dt>적용 대상</dt><dd>'+esc(i.applicability)+'</dd><dt>확인일</dt><dd>'+esc(i.checkedAt)+'</dd></dl>'+[["① 점검 개요",i.overview],["② 법령·가이드 변경 요약 · 확인된 사실",i.summary],["③ 우리 업무 영향 · 실무 해석",i.impact],["④ 대응 방안·정책 변경 검토",i.response],["⑤ 실행 계획",i.plan]].map(([t,v])=>'<h3>'+t+'</h3><p>'+esc(v)+'</p>').join("")+'<p>'+link(i.sourceUrl,i.sourceLabel)+(i.relatedUrl?' · '+link(i.relatedUrl,"관련 보도자료"):"")+'</p>';
  $("detail-content").insertAdjacentHTML("beforeend",'<section class="panel"><h3>티켓 처리</h3><label>처리 상태<select id="ticket-status">'+steps.map(s=>'<option'+(state(i)===s?' selected':'')+'>'+esc(s)+'</option>').join("")+'</select></label><label>검토·종료 사유<textarea id="ticket-note" rows="3">'+esc(saved[id]?.note||"")+'</textarea></label><button id="save-ticket">변경 저장</button><p id="save-feedback" role="status"></p><p class="muted">이 브라우저에만 저장됩니다. Jira·GitHub·다른 기기와 동기화되지 않습니다. 개인정보·내부 증적을 입력하지 마세요.</p></section>');
  $("save-ticket").addEventListener("click",()=>{
  const status=$("ticket-status").value,note=$("ticket-note").value.trim();
@@ -38,12 +74,14 @@ $("unchecked").textContent=D.coverage.filter(c=>c.status!=="확인된 변경 없
 $("coverage").innerHTML=D.coverage.map(c=>'<div><b>'+esc(D.categories.find(x=>x.id===c.category)?.name||c.category)+'</b><span class="badge">'+esc(c.status)+'</span><small>'+esc(c.note)+(c.checkedAt?' · '+esc(c.checkedAt):"")+'</small></div>').join("");
 $("sources").innerHTML=D.categories.map(c=>'<div><h3>'+esc(c.name)+'</h3><p>'+link(c.url,c.agency)+'</p><p>'+esc(c.materials)+'</p><p>검토 초점 · '+esc(c.focus)+'</p></div>').join("");
 $("prompt").textContent=D.syncPrompt;
-$("categories").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(b){category=b.dataset.category;render()}});
+$("categories").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(b){category=b.dataset.category;$("agency-filter").value="";$("board-filter").value="";render()}});
 $("feed").addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(b)show(b.dataset.id)});
 $("close").addEventListener("click",()=>$("detail").close());
 $("search").addEventListener("input",render);
 $("stage").addEventListener("change",render);
-$("reset").addEventListener("click",()=>{category="";$("search").value="";$("stage").value="";render()});
+$("agency-filter").addEventListener("change",()=>{$("board-filter").value="";render()});
+$("board-filter").addEventListener("change",render);
+$("reset").addEventListener("click",()=>{category="";$("agency-filter").value="";$("board-filter").value="";$("search").value="";$("stage").value="";render()});
 $("copy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(D.syncPrompt);$("copy-status").textContent="동기화 지침을 복사했습니다. 기존 dot 브리핑 설정에 적용할 수 있습니다."}catch{$("prompt").parentElement.open=true;$("copy-status").textContent="자동 복사를 사용할 수 없습니다. 아래 지침을 선택해 복사해 주세요."}});
 render();
 $("refresh-data").addEventListener("click",()=>location.reload());
