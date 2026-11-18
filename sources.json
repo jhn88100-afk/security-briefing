@@ -21,13 +21,6 @@
     "detail": "/401/form"
   },
   {
-    "name": "금융위원회 보도자료",
-    "category": "finance",
-    "url": "https://www.fsc.go.kr/no010101",
-    "keywords": "전자금융|보안|신용정보|마이데이터|침해|개인정보|망분리",
-    "detail": "/no010101/\\d+"
-  },
-  {
     "name": "금융위원회 규정변경예고",
     "category": "finance",
     "url": "https://www.fsc.go.kr/po040301",

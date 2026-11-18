@@ -1,6 +1,6 @@
 "use strict";
 const D=window.BRIEFING_DATA;
-const isExcludedSource=url=>{try{const u=new URL(url);return ["pipc.go.kr","www.pipc.go.kr"].includes(u.hostname)&&u.searchParams.get("bbsId")==="BS074"}catch{return false}};
+const isExcludedSource=url=>{try{const u=new URL(url);return (["pipc.go.kr","www.pipc.go.kr"].includes(u.hostname)&&u.searchParams.get("bbsId")==="BS074")||(["fsc.go.kr","www.fsc.go.kr"].includes(u.hostname)&&(u.pathname==="/no010101"||u.pathname.startsWith("/no010101/")))}catch{return false}};
 D.items=D.items.filter(i=>!isExcludedSource(i.sourceUrl));
 const $=id=>document.getElementById(id);
 let category="",activeId="";
@@ -26,7 +26,7 @@ const sourceCatalog=[
  {agency:"FIRST",boards:["CVSS 표준·계산기"]},
  {agency:"개인정보보호위원회",boards:["안내서","기타 게시판"]},
  {agency:"KISA",boards:["보안공지","보고서·가이드","공지사항","불법스팸 자료실","기타 게시판"]},
- {agency:"금융위원회",boards:["보도자료","입법예고·규정변경예고","고시·공고·훈령","기타 게시판"]},
+ {agency:"금융위원회",boards:["입법예고·규정변경예고","고시·공고·훈령","기타 게시판"]},
  {agency:"금융감독원",boards:["기타 게시판"]},
  {agency:"금융보안원",boards:["가이드","보도자료","레그테크","기타 게시판"]},
  {agency:"방송미디어통신위원회",boards:["보도자료","기타 게시판"]}

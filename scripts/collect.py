@@ -28,7 +28,7 @@ def canonical(url):
     return urlunsplit((p.scheme,p.netloc,p.path,urlencode(sorted((k,v) for k,v in parse_qsl(p.query) if k in KEEP)), ""))
 def excluded_source(url):
     p=urlsplit(url)
-    return p.hostname in ("pipc.go.kr","www.pipc.go.kr") and dict(parse_qsl(p.query)).get("bbsId")=="BS074"
+    return (p.hostname in ("pipc.go.kr","www.pipc.go.kr") and dict(parse_qsl(p.query)).get("bbsId")=="BS074") or (p.hostname in ("fsc.go.kr","www.fsc.go.kr") and re.match(r"^/no010101(?:/|$)",p.path) is not None)
 def candidates(html, source, start, end):
     if excluded_source(source["url"]): return []
     parser=Rows(); parser.feed(html); out={}
