@@ -8,7 +8,18 @@ const state=i=>steps.includes(saved[i.id]?.status)?saved[i.id].status:"신규 �
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const link=(url,label)=>{try{const u=new URL(url);return u.protocol==="https:"?'<a href="'+esc(u.href)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+' ↗</a>':esc(label)}catch{return esc(label)}};
 
+
+const vulnerabilitySources=[
+ {agency:"CVE Program",board:"CVE 등록정보",url:"https://www.cve.org/",note:"CVE 식별자·등록정보 · 바로가기 제공, 자동 수집 미연결"},
+ {agency:"NIST NVD",board:"취약점 분석·CVSS",url:"https://nvd.nist.gov/vuln",note:"취약점 분석·CVSS 정보 · 바로가기 제공, 자동 수집 미연결"},
+ {agency:"FIRST",board:"CVSS 표준·계산기",url:"https://www.first.org/cvss/",note:"심각도 평가 표준·계산기 · 바로가기 제공, 자동 수집 미연결"},
+ {agency:"KISA",board:"보안공지",url:"https://www.boho.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020",note:"국내 취약점·업데이트 권고 · 게시판 수집 연결"}
+];
+
 const sourceCatalog=[
+ {agency:"CVE Program",boards:["CVE 등록정보"]},
+ {agency:"NIST NVD",boards:["취약점 분석·CVSS"]},
+ {agency:"FIRST",boards:["CVSS 표준·계산기"]},
  {agency:"개인정보보호위원회",boards:["보도자료","안내서","기타 게시판"]},
  {agency:"KISA",boards:["보안공지","보고서·가이드","공지사항","불법스팸 자료실","기타 게시판"]},
  {agency:"금융위원회",boards:["보도자료","입법예고·규정변경예고","고시·공고·훈령","기타 게시판"]},
@@ -18,6 +29,9 @@ const sourceCatalog=[
 ];
 function sourceInfo(i){
  const u=i.sourceUrl||"";
+ if(/^https:\/\/(?:www\.)?cve\.org\//.test(u))return {agency:"CVE Program",board:"CVE 등록정보"};
+ if(/^https:\/\/nvd\.nist\.gov\//.test(u))return {agency:"NIST NVD",board:"취약점 분석·CVSS"};
+ if(/^https:\/\/(?:www\.)?first\.org\/cvss\//.test(u))return {agency:"FIRST",board:"CVSS 표준·계산기"};
  if(/(?:^https:\/\/)(?:www\.)?pipc\.go\.kr\//.test(u))return {agency:"개인정보보호위원회",board:/bbsId=BS074(?:&|$)/.test(u)?"보도자료":/bbsId=BS217(?:&|$)/.test(u)?"안내서":"기타 게시판"};
  if(/^https:\/\/(?:www\.)?boho\.or\.kr\//.test(u))return {agency:"KISA",board:/bbsId=B0000133(?:&|$)/.test(u)?"보안공지":/bbsId=B0000132(?:&|$)/.test(u)?"보고서·가이드":"기타 게시판"};
  if(/^https:\/\/spam\.kisa\.or\.kr\//.test(u))return {agency:"KISA",board:"불법스팸 자료실"};
@@ -30,7 +44,7 @@ function sourceInfo(i){
 }
 function refreshSourceFilters(){
  const scoped=D.items.filter(i=>!category||i.category===category);
- const agencies=[...new Set(scoped.map(i=>sourceInfo(i).agency))];
+ const agencies=[...new Set([...scoped.map(i=>sourceInfo(i).agency),...(category==="vulnerability"?vulnerabilitySources.map(s=>s.agency):[])])];
  const current=$("agency-filter").value;
  $("agency-filter").innerHTML='<option value="">전체 기관</option>'+agencies.map(a=>'<option value="'+esc(a)+'">'+esc(a)+' ('+scoped.filter(i=>sourceInfo(i).agency===a).length+')</option>').join("");
  $("agency-filter").value=agencies.includes(current)?current:"";
@@ -44,10 +58,12 @@ function refreshSourceFilters(){
 
 function render(){
  refreshSourceFilters();
- const term=$("search").value.trim().toLowerCase(),stage=$("stage").value;
- const list=D.items.filter(i=>(!category||i.category===category)&&(!stage||i.stage===stage)&&(!$("agency-filter").value||sourceInfo(i).agency===$("agency-filter").value)&&(!$("board-filter").value||sourceInfo(i).board===$("board-filter").value)&&(!term||JSON.stringify(i).toLowerCase().includes(term)));
+ $("vulnerability-sources").hidden=category!=="vulnerability";
+ $("vulnerability-sources").innerHTML=vulnerabilitySources.map(s=>'<div><strong>'+esc(s.agency)+' · '+esc(s.board)+'</strong><p>'+esc(s.note)+'</p>'+link(s.url,"공식 사이트 열기")+'</div>').join("");
+ const stage=$("stage").value;
+ const list=D.items.filter(i=>(!category||i.category===category)&&(!stage||i.stage===stage)&&(!$("agency-filter").value||sourceInfo(i).agency===$("agency-filter").value)&&(!$("board-filter").value||sourceInfo(i).board===$("board-filter").value));
  $("count").textContent=list.length+"건";
- $("feed").innerHTML='<div class="issue-table-wrap"><table class="issue-table"><caption class="sr-only">분야별 규제 대응 티켓 목록</caption><thead><tr><th scope="col">티켓</th><th scope="col">제목</th><th scope="col">분야</th><th scope="col">처리 상태</th><th scope="col">입법 단계</th><th scope="col">발표일</th><th scope="col">의견제출 기한</th></tr></thead><tbody>'+list.map(i=>'<tr data-id="'+esc(i.id)+'"><td class="issue-key">'+esc(i.id.toUpperCase())+'</td><td class="issue-title"><button data-id="'+esc(i.id)+'">'+esc(i.title)+'</button><small>'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</small></td><td>'+esc(D.categories.find(c=>c.id===i.category)?.name||i.category)+'</td><td><span class="status-chip">'+esc(state(i))+'</span></td><td><span class="badge">'+esc(i.stage)+'</span></td><td class="issue-date">'+esc(i.publishedAt)+'</td><td class="issue-date">'+esc(i.deadline||"—")+'</td></tr>').join("")+(!list.length?'<tr><td colspan="7" class="issue-empty">조건에 맞는 등록 자료가 없습니다. 0건은 해당 기관에 발표가 없다는 뜻이 아닙니다.</td></tr>':"")+'</tbody></table></div>';
+ $("feed").innerHTML='<div class="issue-table-wrap"><table class="issue-table"><caption class="sr-only">분야별 규제 대응 티켓 목록</caption><thead><tr><th scope="col">티켓</th><th scope="col">제목</th><th scope="col">분야</th><th scope="col">처리 상태</th><th scope="col">입법·검토 단계</th><th scope="col">발표일</th><th scope="col">의견제출 기한</th></tr></thead><tbody>'+list.map(i=>'<tr data-id="'+esc(i.id)+'"><td class="issue-key">'+esc(i.id.toUpperCase())+'</td><td class="issue-title"><button data-id="'+esc(i.id)+'">'+esc(i.title)+'</button><small>'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</small></td><td>'+esc(D.categories.find(c=>c.id===i.category)?.name||i.category)+'</td><td><span class="status-chip">'+esc(state(i))+'</span></td><td><span class="badge">'+esc(i.stage)+'</span></td><td class="issue-date">'+esc(i.publishedAt)+'</td><td class="issue-date">'+esc(i.deadline||"—")+'</td></tr>').join("")+(!list.length?'<tr><td colspan="7" class="issue-empty">조건에 맞는 등록 자료가 없습니다. 0건은 해당 기관에 발표가 없다는 뜻이 아닙니다.</td></tr>':"")+'</tbody></table></div>';
 
  document.querySelectorAll("[data-category]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.category===category)));
 }
@@ -61,6 +77,7 @@ function show(id){
  const next={...saved,[activeId]:{status,note,changedAt:new Date().toISOString()}};
  try{localStorage.setItem("regulatory-ticket-state",JSON.stringify(next));saved=next;render();$("save-feedback").textContent="이 브라우저에 저장했습니다."}catch{$("save-feedback").textContent="저장하지 못했습니다. 브라우저 저장소 설정을 확인해 주세요."}
  });
+ if(i.category==="vulnerability")$("detail-content").insertAdjacentHTML("afterbegin",'<div class="panel"><strong>취약점 정보</strong><p>CVE: '+esc(Array.isArray(i.cves)&&i.cves.length?i.cves.join(", "):"원문 확인 필요")+'</p><p>CVSS: '+esc(i.cvss||"점수·버전·출처 확인 필요")+'</p></div>');
  $("detail").showModal();
 }
 $("categories").innerHTML=[{id:"",name:"전체 분야"},...D.categories].map(c=>'<button data-category="'+c.id+'" aria-pressed="'+(c.id==="")+'">'+esc(c.name)+'</button>').join("");
@@ -77,11 +94,11 @@ $("prompt").textContent=D.syncPrompt;
 $("categories").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(b){category=b.dataset.category;$("agency-filter").value="";$("board-filter").value="";render()}});
 $("feed").addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(b)show(b.dataset.id)});
 $("close").addEventListener("click",()=>$("detail").close());
-$("search").addEventListener("input",render);
+
 $("stage").addEventListener("change",render);
 $("agency-filter").addEventListener("change",()=>{$("board-filter").value="";render()});
 $("board-filter").addEventListener("change",render);
-$("reset").addEventListener("click",()=>{category="";$("agency-filter").value="";$("board-filter").value="";$("search").value="";$("stage").value="";render()});
+$("reset").addEventListener("click",()=>{category="";$("agency-filter").value="";$("board-filter").value="";$("stage").value="";render()});
 $("copy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(D.syncPrompt);$("copy-status").textContent="동기화 지침을 복사했습니다. 기존 dot 브리핑 설정에 적용할 수 있습니다."}catch{$("prompt").parentElement.open=true;$("copy-status").textContent="자동 복사를 사용할 수 없습니다. 아래 지침을 선택해 복사해 주세요."}});
 render();
 $("refresh-data").addEventListener("click",()=>location.reload());

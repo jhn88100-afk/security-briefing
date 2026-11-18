@@ -81,6 +81,7 @@ def run():
             if row["sourceUrl"] in known: continue
             known.add(row["sourceUrl"]);added+=1
             category=source["category"]
+            if category=="incident" and re.search(r"CVE-\d{4}-\d+|CVSS|보안\s*업데이트|보안취약점|제품.*취약점|취약점.*패치",row["title"],re.I): category="vulnerability"
             if source["name"].startswith("금융위원회") and re.search("신용정보|마이데이터",row["title"]): category="credit"
             data["items"].append(dict(row,id="auto-"+hashlib.sha256(row["sourceUrl"].encode()).hexdigest()[:12],category=category,agency=source["name"],stage="원문 검토 대기",promulgatedAt=None,effectiveAt=None,effectiveNote="원문·첨부파일 확인 필요",deadline=None,applicability="적용 대상 확인 필요",sourceLabel="공식 게시판 원문",checkedAt=end.isoformat(),overview="공식 게시판의 제목·게시일·링크를 자동 수집한 검토 후보입니다.",summary="본문·첨부파일의 변경 내용은 아직 검증하지 않았습니다. 원문 검토 후 요약을 작성하세요.",impact="[검토 대기] 실제 사용 기술·서비스와 법 적용 대상을 대조해야 합니다.",response="[제안] 공식 원문과 첨부파일을 확인하고 법령·고시 사항은 국가법령정보센터와 대조합니다.",plan="[제안] 적용 여부, 발표일·시행일·경과조치 확인 후 대응 방안과 담당 부서를 협의합니다.",verification="metadata-only"))
     data["items"].sort(key=lambda i:i.get("publishedAt") or "",reverse=True)
@@ -88,7 +89,7 @@ def run():
     data["reviewWindow"]=f"{start} ~ {end} · 연결 게시판 첫 페이지, 기존 자료 보존"
     data["collection"]={"lastRunAt":now.isoformat(),"added":added,"sources":report,"status":"일부 확인" if any(r["status"]=="일부 확인" for r in report) else "실패"}
     for c in data["coverage"]:
-        matching=[r for r in report if r["category"]==c["category"]]
+        matching=[r for r in report if r["category"]==c["category"] or (c["category"]=="vulnerability" and r["category"]=="incident")]
         c.update(status="일부 확인" if any(r["status"]=="일부 확인" for r in matching) else "확인 필요",checkedAt=end.isoformat(),note=" / ".join(r["name"]+": "+r["note"] for r in matching) or "자동 수집 연결 미완료; 공식 원문 수동 확인 필요")
     tmp=Path("data.js.tmp")
     tmp.write_text("window.BRIEFING_DATA = "+json.dumps(data,ensure_ascii=False,indent=2)+";\n",encoding="utf-8")
