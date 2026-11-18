@@ -2,9 +2,11 @@
 const D=window.BRIEFING_DATA;
 const $=id=>document.getElementById(id);
 let category="",activeId="";
-const steps=["신규 접수","적용 여부 검토","대응 계획","조치 중","검증","완료","시행 대기","적용 제외","중복 종료"];
+const steps=["검토 대기","검토 중","검토 완료"];
 let saved={};try{const v=JSON.parse(localStorage.getItem("regulatory-ticket-state")||"{}");if(v&&typeof v==="object"&&!Array.isArray(v))saved=v}catch{}
-const state=i=>steps.includes(saved[i.id]?.status)?saved[i.id].status:"신규 접수";
+const legacyStates={"신규 접수":"검토 대기","적용 여부 검토":"검토 중","대응 계획":"검토 중","조치 중":"검토 중","검증":"검토 중","시행 대기":"검토 중","완료":"검토 완료","적용 제외":"검토 완료","중복 종료":"검토 완료"};
+const normalizeState=s=>steps.includes(s)?s:(legacyStates[s]||"검토 대기");
+const state=i=>normalizeState(saved[i.id]?.status);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const link=(url,label)=>{try{const u=new URL(url);return u.protocol==="https:"?'<a href="'+esc(u.href)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+' ↗</a>':esc(label)}catch{return esc(label)}};
 
@@ -72,10 +74,10 @@ function render(){
 function show(id){
  const i=D.items.find(x=>x.id===id);if(!i)return;activeId=id;
  $("detail-content").innerHTML='<p class="eyebrow">'+esc(sourceInfo(i).agency)+' · '+esc(sourceInfo(i).board)+'</p><h2 id="detail-title">'+esc(i.title)+'</h2><span class="badge">'+esc(i.stage)+'</span><dl><dt>발표일</dt><dd>'+esc(i.publishedAt)+'</dd><dt>공포일</dt><dd>'+esc(i.promulgatedAt||"미공포 / 해당 없음")+'</dd><dt>시행일</dt><dd>'+esc(i.effectiveAt||i.effectiveNote)+'</dd><dt>의견제출</dt><dd>'+esc(i.deadline||"해당 없음")+'</dd><dt>적용 대상</dt><dd>'+esc(i.applicability)+'</dd><dt>확인일</dt><dd>'+esc(i.checkedAt)+'</dd></dl>'+[["① 점검 개요",i.overview],[i.verification==="metadata-only"?"② 원문 검토 대기 · 제목·게시일만 수집":"② 발표 요약",i.summary],["③ 우리 업무 영향 · 실무 해석",i.impact],["④ 대응 방안·정책 변경 검토",i.response],["⑤ 실행 계획",i.plan]].map(([t,v])=>'<h3>'+t+'</h3><p>'+esc(v)+'</p>').join("")+'<p>'+link(i.sourceUrl,i.sourceLabel)+(i.relatedUrl?' · '+link(i.relatedUrl,"관련 보도자료"):"")+'</p>';
- $("detail-content").insertAdjacentHTML("beforeend",'<section class="panel"><h3>티켓 처리</h3><label>처리 상태<select id="ticket-status">'+steps.map(s=>'<option'+(state(i)===s?' selected':'')+'>'+esc(s)+'</option>').join("")+'</select></label><label>검토·종료 사유<textarea id="ticket-note" rows="3">'+esc(saved[id]?.note||"")+'</textarea></label><button id="save-ticket">변경 저장</button><p id="save-feedback" role="status"></p><p class="muted">이 브라우저에만 저장됩니다. Jira·GitHub·다른 기기와 동기화되지 않습니다. 개인정보·내부 증적을 입력하지 마세요.</p></section>');
+ $("detail-content").insertAdjacentHTML("beforeend",'<section class="panel"><h3>티켓 처리</h3><label>처리 상태<select id="ticket-status">'+steps.map(s=>'<option'+(state(i)===s?' selected':'')+'>'+esc(s)+'</option>').join("")+'</select></label><label>검토 메모 (선택)<textarea id="ticket-note" rows="3">'+esc(saved[id]?.note||"")+'</textarea></label><button id="save-ticket">변경 저장</button><p id="save-feedback" role="status"></p><p class="muted">이 브라우저에만 저장됩니다. Jira·GitHub·다른 기기와 동기화되지 않습니다. 개인정보·내부 증적을 입력하지 마세요.</p></section>');
  $("save-ticket").addEventListener("click",()=>{
  const status=$("ticket-status").value,note=$("ticket-note").value.trim();
- if(["완료","적용 제외","중복 종료"].includes(status)&&!note){$("save-feedback").textContent="종료 사유 또는 검증 결과를 입력해 주세요.";return}
+ 
  const next={...saved,[activeId]:{status,note,changedAt:new Date().toISOString()}};
  try{localStorage.setItem("regulatory-ticket-state",JSON.stringify(next));saved=next;render();$("save-feedback").textContent="이 브라우저에 저장했습니다."}catch{$("save-feedback").textContent="저장하지 못했습니다. 브라우저 저장소 설정을 확인해 주세요."}
  });
