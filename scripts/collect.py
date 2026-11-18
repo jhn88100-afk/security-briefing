@@ -26,7 +26,11 @@ class Rows(HTMLParser):
 def canonical(url):
     p=urlsplit(url)
     return urlunsplit((p.scheme,p.netloc,p.path,urlencode(sorted((k,v) for k,v in parse_qsl(p.query) if k in KEEP)), ""))
+def excluded_source(url):
+    p=urlsplit(url)
+    return p.hostname in ("pipc.go.kr","www.pipc.go.kr") and dict(parse_qsl(p.query)).get("bbsId")=="BS074"
 def candidates(html, source, start, end):
+    if excluded_source(source["url"]): return []
     parser=Rows(); parser.feed(html); out={}
     for row in parser.rows:
         m=DATE.search(" ".join(row["text"]))
@@ -67,6 +71,8 @@ def run():
     path=Path("data.js"); raw=path.read_text(encoding="utf-8")
     data=json.loads(raw.split("=",1)[1].strip().rstrip(";"))
     sources=json.loads(Path("sources.json").read_text(encoding="utf-8"))
+    sources=[s for s in sources if not excluded_source(s["url"])]
+    data["items"]=[i for i in data["items"] if not excluded_source(i["sourceUrl"])]
     now=dt.datetime.now(dt.timezone(dt.timedelta(hours=9))); end=now.date()
     days=int(os.getenv("LOOKBACK_DAYS","30")); days=max(1,min(days,365))
     start=end-dt.timedelta(days=days-1)

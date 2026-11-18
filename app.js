@@ -1,5 +1,7 @@
 "use strict";
 const D=window.BRIEFING_DATA;
+const isExcludedSource=url=>{try{const u=new URL(url);return ["pipc.go.kr","www.pipc.go.kr"].includes(u.hostname)&&u.searchParams.get("bbsId")==="BS074"}catch{return false}};
+D.items=D.items.filter(i=>!isExcludedSource(i.sourceUrl));
 const $=id=>document.getElementById(id);
 let category="",activeId="";
 const steps=["검토 대기","검토 중","검토 완료"];
@@ -22,7 +24,7 @@ const sourceCatalog=[
  {agency:"CVE Program",boards:["CVE 등록정보"]},
  {agency:"NIST NVD",boards:["취약점 분석·CVSS"]},
  {agency:"FIRST",boards:["CVSS 표준·계산기"]},
- {agency:"개인정보보호위원회",boards:["보도자료","안내서","기타 게시판"]},
+ {agency:"개인정보보호위원회",boards:["안내서","기타 게시판"]},
  {agency:"KISA",boards:["보안공지","보고서·가이드","공지사항","불법스팸 자료실","기타 게시판"]},
  {agency:"금융위원회",boards:["보도자료","입법예고·규정변경예고","고시·공고·훈령","기타 게시판"]},
  {agency:"금융감독원",boards:["기타 게시판"]},
