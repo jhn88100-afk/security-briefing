@@ -46,3 +46,7 @@ $("stage").addEventListener("change",render);
 $("reset").addEventListener("click",()=>{category="";$("search").value="";$("stage").value="";render()});
 $("copy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(D.syncPrompt);$("copy-status").textContent="동기화 지침을 복사했습니다. 기존 dot 브리핑 설정에 적용할 수 있습니다."}catch{$("prompt").parentElement.open=true;$("copy-status").textContent="자동 복사를 사용할 수 없습니다. 아래 지침을 선택해 복사해 주세요."}});
 render();
+$("refresh-data").addEventListener("click",()=>location.reload());
+const collection=D.collection;
+$("collection-status").textContent=collection ? "최근 수집 · "+collection.lastRunAt+" · "+collection.status+" · 신규 "+collection.added+"건 (본문 검토 전)" : "동기화 실행 → GitHub Run workflow → 완료 후 결과 새로고침";
+if(collection){$("sources").insertAdjacentHTML("afterbegin",collection.sources.map(s=>'<div><h3>'+esc(s.name)+' · '+esc(s.status)+'</h3><p>'+esc(s.note)+' · 후보 '+esc(s.found)+'건</p></div>').join(""));}

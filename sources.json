@@ -1,0 +1,65 @@
+[
+  {
+    "name": "개인정보위 보도자료",
+    "category": "privacy",
+    "url": "https://pipc.go.kr/np/cop/bbs/selectBoardList.do?bbsId=BS074&mCode=B030020000",
+    "keywords": "개인정보|안전조치|보호법",
+    "detail": "selectBoardArticle"
+  },
+  {
+    "name": "개인정보위 안내서",
+    "category": "privacy",
+    "url": "https://pipc.go.kr/np/cop/bbs/selectBoardList.do?bbsId=BS217&mCode=D010000000",
+    "keywords": "개인정보|안내서|보호",
+    "detail": "selectBoardArticle"
+  },
+  {
+    "name": "KISA 보호나라 보안공지",
+    "category": "incident",
+    "url": "https://www.boho.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020",
+    "keywords": "보안|취약|업데이트|침해",
+    "detail": "view.do.*nttId="
+  },
+  {
+    "name": "KISA 공지사항",
+    "category": "spam",
+    "url": "https://www.kisa.or.kr/401",
+    "keywords": "스팸|광고성|수신동의",
+    "detail": "/401/form"
+  },
+  {
+    "name": "금융위원회 보도자료",
+    "category": "finance",
+    "url": "https://www.fsc.go.kr/no010101",
+    "keywords": "전자금융|보안|신용정보|마이데이터|침해|개인정보|망분리",
+    "detail": "/no010101/\\d+"
+  },
+  {
+    "name": "금융위원회 규정변경예고",
+    "category": "finance",
+    "url": "https://www.fsc.go.kr/po040301",
+    "keywords": "전자금융|신용정보|보안",
+    "detail": "/view\\?"
+  },
+  {
+    "name": "금융위원회 고시",
+    "category": "credit",
+    "url": "https://www.fsc.go.kr/po040200",
+    "keywords": "신용정보",
+    "detail": "/po040200/\\d+"
+  },
+  {
+    "name": "금융보안원 가이드",
+    "category": "practice",
+    "url": "https://www.fsec.or.kr/bbs/222",
+    "keywords": "가이드|보안|안내|클라우드",
+    "detail": "/bbs/detail"
+  },
+  {
+    "name": "방송미디어통신위원회 보도자료",
+    "category": "spam",
+    "url": "https://www.kmcc.go.kr/user.do?page=A05030000&dc=K00000200",
+    "keywords": "스팸|광고성|수신",
+    "detail": "boardSeq="
+  }
+]
