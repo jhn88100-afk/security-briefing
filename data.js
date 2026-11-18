@@ -1,7 +1,7 @@
 window.BRIEFING_DATA = {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18 20:56 KST",
-  "reviewWindow": "2025-11-19 ~ 2026-11-18 · 연결 게시판 첫 페이지, 기존 자료 보존",
+  "updatedAt": "2026-11-19 01:17 KST",
+  "reviewWindow": "2026-10-21 ~ 2026-11-19 · 연결 게시판 첫 페이지, 기존 자료 보존",
   "sync": {
     "status": "연결 대기",
     "note": "기존 dot 기관 브리핑의 알림 식별자를 현재 연결에서 확인하지 못했습니다. 자동 동기화는 아직 활성화되지 않았습니다."
@@ -68,43 +68,43 @@ window.BRIEFING_DATA = {
     {
       "category": "privacy",
       "status": "일부 확인",
-      "checkedAt": "2026-11-18",
-      "note": "개인정보위 안내서: 게시판 첫 페이지 수집; 전체 기간 망라 아님. 보도자료는 수집·노출 제외"
+      "checkedAt": "2026-11-19",
+      "note": "개인정보위 안내서: 게시판 첫 페이지 수집; 전체 기간 망라 아님"
     },
     {
       "category": "incident",
       "status": "일부 확인",
-      "checkedAt": "2026-11-18",
+      "checkedAt": "2026-11-19",
       "note": "KISA 보호나라 보안공지: 게시판 첫 페이지 수집; 전체 기간 망라 아님"
     },
     {
       "category": "vulnerability",
       "status": "일부 확인",
-      "checkedAt": "2026-11-18",
+      "checkedAt": "2026-11-19",
       "note": "KISA 보호나라 보안공지: 게시판 첫 페이지 수집; 전체 기간 망라 아님"
     },
     {
       "category": "spam",
       "status": "일부 확인",
-      "checkedAt": "2026-11-18",
+      "checkedAt": "2026-11-19",
       "note": "KISA 공지사항: 게시판 첫 페이지 수집; 전체 기간 망라 아님 / 방송미디어통신위원회 보도자료: 게시판 구조·차단 여부 확인 필요"
     },
     {
       "category": "finance",
       "status": "일부 확인",
-      "checkedAt": "2026-11-18",
+      "checkedAt": "2026-11-19",
       "note": "금융위원회 보도자료: 게시판 첫 페이지 수집; 전체 기간 망라 아님 / 금융위원회 규정변경예고: 게시판 첫 페이지 수집; 전체 기간 망라 아님"
     },
     {
       "category": "credit",
       "status": "일부 확인",
-      "checkedAt": "2026-11-18",
+      "checkedAt": "2026-11-19",
       "note": "금융위원회 고시: 게시판 첫 페이지 수집; 전체 기간 망라 아님"
     },
     {
       "category": "practice",
       "status": "확인 필요",
-      "checkedAt": "2026-11-18",
+      "checkedAt": "2026-11-19",
       "note": "금융보안원 가이드: 게시판 구조·차단 여부 확인 필요"
     }
   ],
@@ -708,15 +708,15 @@ window.BRIEFING_DATA = {
     "sections": 5
   },
   "collection": {
-    "lastRunAt": "2026-11-18T20:56:44.575485+09:00",
-    "added": 10,
+    "lastRunAt": "2026-11-19T01:17:53.703243+09:00",
+    "added": 0,
     "sources": [
       {
         "name": "개인정보위 안내서",
         "category": "privacy",
         "url": "https://pipc.go.kr/np/cop/bbs/selectBoardList.do?bbsId=BS217&mCode=D010000000",
         "status": "일부 확인",
-        "found": 11,
+        "found": 3,
         "note": "게시판 첫 페이지 수집; 전체 기간 망라 아님"
       },
       {
@@ -724,7 +724,7 @@ window.BRIEFING_DATA = {
         "category": "incident",
         "url": "https://www.boho.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020",
         "status": "일부 확인",
-        "found": 13,
+        "found": 11,
         "note": "게시판 첫 페이지 수집; 전체 기간 망라 아님"
       },
       {
